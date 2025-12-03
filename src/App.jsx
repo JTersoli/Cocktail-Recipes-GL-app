@@ -25,7 +25,10 @@ function App() {
           id: row.id,
           name: row.name,
           ingredients: row.ingredients
-            ? row.ingredients.split(",").map((i) => i.trim()).filter(Boolean)
+            ? row.ingredients
+                .split(",")
+                .map((i) => i.trim())
+                .filter(Boolean)
             : [],
           method: row.method || "",
           glass: row.glass || "",
@@ -44,30 +47,29 @@ function App() {
     fetchRecipes();
   }, []);
 
-const normalizedQuery = query.toLowerCase().trim();
+  const normalizedQuery = query.toLowerCase().trim();
 
-const filteredRecipes = recipes.filter((recipe) => {
-  if (!normalizedQuery) return true;
+  const filteredRecipes = recipes.filter((recipe) => {
+    if (!normalizedQuery) return true;
 
-  const inName = recipe.name?.toLowerCase().includes(normalizedQuery);
-  const inGlass = recipe.glass?.toLowerCase().includes(normalizedQuery);
-  const inGarnish = recipe.garnish?.toLowerCase().includes(normalizedQuery);
-  const inIngredients = recipe.ingredients?.some((ing) =>
-    ing.toLowerCase().includes(normalizedQuery)
-  );
-  const inMethod = recipe.method?.toLowerCase().includes(normalizedQuery);
+    const inName = recipe.name?.toLowerCase().includes(normalizedQuery);
+    const inGlass = recipe.glass?.toLowerCase().includes(normalizedQuery);
+    const inGarnish = recipe.garnish?.toLowerCase().includes(normalizedQuery);
+    const inIngredients = recipe.ingredients?.some((ing) =>
+      ing.toLowerCase().includes(normalizedQuery)
+    );
+    const inMethod = recipe.method?.toLowerCase().includes(normalizedQuery);
 
-  return inName || inGlass || inGarnish || inIngredients || inMethod;
-});
-
+    return inName || inGlass || inGarnish || inIngredients || inMethod;
+  });
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-50">
-      <div className="max-w-lg mx-auto px-4 pb-6">
-        {/* Sticky header + search */}
-        <header className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur border-b border-slate-800 -mx-4 px-4 pt-4 pb-3 mb-3">
-          <h1 className="text-2xl font-bold text-center mb-3">
-            Cocktail Recipe Finder 🍸
+    <div className="min-h-screen bg-[#0d2f16] text-[#24391c]">
+      <div className="max-w-5xl mx-auto px-4 md:px-8 pb-10">
+        {/* Header */}
+        <header className="sticky top-0 z-20 bg-[#0d2f16]/95 backdrop-blur-sm border-b border-[#1f4a2a] pt-8 pb-6 mb-10">
+          <h1 className="text-4xl md:text-5xl font-serif font-bold text-center text-[#fefdf8] tracking-[0.2em] mb-8">
+            COCKTAIL RECIPE FINDER
           </h1>
 
           <input
@@ -75,10 +77,12 @@ const filteredRecipes = recipes.filter((recipe) => {
             placeholder="Search by name, ingredient, glass..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="w-full p-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
+            className="w-full p-4 rounded-md bg-[#144422] border border-[#1f4a2a]
+                       text-[#fefdf8] placeholder:text-[#e5dfc6] text-sm
+                       focus:outline-none focus:border-[#e5dfc6] transition"
           />
 
-          <p className="mt-2 text-xs text-slate-400 text-right">
+          <p className="mt-3 text-xs text-[#fefdf8]/70 text-right">
             {loading
               ? "Loading recipes..."
               : error
@@ -89,76 +93,85 @@ const filteredRecipes = recipes.filter((recipe) => {
           </p>
         </header>
 
-        <main className="space-y-3">
+        <main className="space-y-4">
           {error && (
-            <div className="rounded-xl border border-red-500/50 bg-red-500/10 p-4 text-sm text-red-200">
+            <div className="rounded-xl border border-red-500/50 bg-red-500/15 p-4 text-sm text-red-100">
               {error}
             </div>
           )}
 
           {!error && loading && (
-            <div className="rounded-xl border border-slate-700 bg-slate-800 p-4 text-sm text-slate-300">
+            <div className="rounded-xl border border-[#1f4a2a] bg-[#144422] p-4 text-sm text-[#fefdf8]">
               Loading recipes…
             </div>
           )}
 
           {!loading && !error && filteredRecipes.length === 0 && (
-            <div className="rounded-xl border border-slate-700 bg-slate-800 p-4 text-center text-sm text-slate-300">
+            <div className="rounded-xl border border-[#1f4a2a] bg-[#144422] p-4 text-center text-sm text-[#fefdf8]">
               No recipes found for <strong>{query}</strong>. Try another word.
             </div>
           )}
 
-          {!loading &&
-            !error &&
-            filteredRecipes.map((recipe) => (
-              <article
-                key={recipe.id || recipe.name}
-                className="bg-slate-800 rounded-xl border border-slate-700 p-3 shadow-md space-y-2"
-              >
-                <header>
-                  <h2 className="text-lg font-semibold">{recipe.name}</h2>
-                  <p className="text-xs text-slate-400">
-                    Glass:{" "}
-                    <span className="font-medium">
-                      {recipe.glass || "—"}
-                    </span>
+          {!loading && !error && filteredRecipes.length > 0 && (
+            <section className="grid gap-6 md:grid-cols-2">
+              {filteredRecipes.map((recipe) => (
+                <article
+                  key={recipe.id || recipe.name}
+                  className="bg-[#fef7dd] text-[#24391c] rounded-xl border border-[#e7d7ad]
+                             p-6 shadow-[0_4px_12px_rgba(0,0,0,0.25)] space-y-4"
+                >
+                  {/* Header de la card */}
+                  <header>
+                    <h2 className="text-xl font-serif font-bold tracking-wide">
+                      {recipe.name}
+                    </h2>
+
+                    <p className="mt-1 uppercase text-[11px] tracking-widest text-[#d48b2f] font-semibold">
+                      Glass:{" "}
+                      <span className="font-normal text-[#24391c]">
+                        {recipe.glass || "—"}
+                      </span>
+                    </p>
+
                     {recipe.garnish && (
-                      <>
-                        {" "}
-                        · Garnish:{" "}
-                        <span className="font-medium">
+                      <p className="uppercase text-[11px] tracking-widest text-[#d48b2f] font-semibold">
+                        Garnish:{" "}
+                        <span className="font-normal text-[#24391c]">
                           {recipe.garnish}
                         </span>
-                      </>
+                      </p>
                     )}
-                  </p>
-                </header>
+                  </header>
 
-                {recipe.ingredients?.length > 0 && (
-                  <section>
-                    <h3 className="text-xs font-semibold text-slate-300 mb-1">
-                      Ingredients
-                    </h3>
-                    <ul className="text-xs text-slate-200 list-disc list-inside space-y-0.5">
-                      {recipe.ingredients.map((ing) => (
-                        <li key={ing}>{ing}</li>
-                      ))}
-                    </ul>
-                  </section>
-                )}
+                  {/* Ingredientes */}
+                  {recipe.ingredients?.length > 0 && (
+                    <section>
+                      <h3 className="text-[11px] font-semibold uppercase text-[#d48b2f] mb-1 tracking-wide">
+                        Ingredients
+                      </h3>
+                      <ul className="text-sm list-disc list-inside space-y-1">
+                        {recipe.ingredients.map((ing) => (
+                          <li key={ing}>{ing}</li>
+                        ))}
+                      </ul>
+                    </section>
+                  )}
 
-                {recipe.method && (
-                  <section>
-                    <h3 className="text-xs font-semibold text-slate-300 mb-1">
-                      Method
-                    </h3>
-                    <p className="text-xs text-slate-200 whitespace-pre-line">
-                      {recipe.method}
-                    </p>
-                  </section>
-                )}
-              </article>
-            ))}
+                  {/* Método */}
+                  {recipe.method && (
+                    <section>
+                      <h3 className="text-[11px] font-semibold uppercase text-[#d48b2f] mb-1 tracking-wide">
+                        Method Notes
+                      </h3>
+                      <p className="text-sm leading-relaxed whitespace-pre-line">
+                        {recipe.method}
+                      </p>
+                    </section>
+                  )}
+                </article>
+              ))}
+            </section>
+          )}
         </main>
       </div>
     </div>
