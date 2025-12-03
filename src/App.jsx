@@ -91,7 +91,7 @@ function App() {
         <header className="sticky top-0 z-20 bg-[#0d2f16]/95 backdrop-blur-sm border-b border-[#1f4a2a] pt-3 pb-3 mb-8">
           <input
             type="text"
-            placeholder="Search by name..."
+            placeholder="Search by name, ingredient, glass..."
             value={query}
             onChange={handleQueryChange}
             className="w-full p-4 rounded-md bg-[#144422] border border-[#1f4a2a]
