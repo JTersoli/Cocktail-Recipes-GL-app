@@ -1,16 +1,61 @@
-# React + Vite
+# Gin Lane Cocktail Book 🍸
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A fast and searchable cocktail recipe book built for **Gin Lane (Sydney)**.
 
-Currently, two official plugins are available:
+This project was created to support **staff training and daily operations**, since the venue manages ~200 cocktails and new team members need quick access to recipes, ingredients, glassware and garnish details.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+The recipe database is connected to **Google Sheets via SheetDB**, so the bar manager can update recipes easily without touching the code.
 
-## React Compiler
+🔗 **Live App:** https://gl-recipes.vercel.app/
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## Preview
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+![App Preview](./public/preview.jpeg)
+
+---
+
+## Features
+
+- ✅ Search by **cocktail name**
+- ✅ Search by **ingredient**
+- ✅ Search by **glassware**
+- ✅ Search by **garnish**
+- ✅ Responsive design (mobile + desktop)
+- ✅ Connected to Google Sheets for easy updates
+- ✅ Back-to-top button for long scrolling menus
+
+---
+
+## Data Source
+
+Recipes are stored in **Google Sheets** and fetched via **SheetDB API**.
+
+This allows non-technical users to update the cocktail database in real time.
+
+---
+
+## Design Inspiration
+
+The UI was inspired by Gin Lane’s printed menu style to keep a consistent brand look and feel.
+
+![Menu Inspiration](./public/menu-inspo.webp)
+
+---
+
+## Tech Stack
+
+- React + Vite
+- TailwindCSS
+- SheetDB (Google Sheets API wrapper)
+- Deployed with Vercel
+
+---
+
+## Run Locally
+
+```bash
+npm install
+npm run dev
+```
