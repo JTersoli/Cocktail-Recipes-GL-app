@@ -2,9 +2,39 @@ import { useEffect, useState } from "react";
 
 const API_URL = "https://sheetdb.io/api/v1/o4iy8coei0doo";
 
+const ALL_SECTIONS = "All";
+const NO_SECTION = "Other";
+
+// Header names in the sheet can drift (Google Sheets renames a header to
+// "Columna 4" when the range becomes a table), so each field accepts aliases.
+const FIELD_ALIASES = {
+  id: ["id"],
+  section: ["seccion", "section"],
+  name: ["name", "nombre"],
+  ingredients: ["ingredients", "ingredientes", "columna 4"],
+  method: ["method", "metodo"],
+  glass: ["glass", "vaso"],
+  garnish: ["garnish", "guarnicion", "columna 7"],
+};
+
+// lowercase and strip accents, so "creme" finds "crème" and "Sección" matches "seccion"
+const normalizeText = (text) =>
+  text
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .toLowerCase()
+    .trim();
+
+function readField(row, field) {
+  const aliases = FIELD_ALIASES[field];
+  const key = Object.keys(row).find((k) => aliases.includes(normalizeText(k)));
+  return key ? String(row[key] ?? "").trim() : "";
+}
+
 function App() {
   const [recipes, setRecipes] = useState([]);
   const [query, setQuery] = useState("");
+  const [activeSection, setActiveSection] = useState(ALL_SECTIONS);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -17,16 +47,28 @@ function App() {
         if (!res.ok) throw new Error("Failed to fetch recipes");
         const data = await res.json();
 
-        const formatted = data.map((row) => ({
-          id: row.id,
-          name: row.name,
-          ingredients: row.ingredients
-            ? row.ingredients.split(",").map((i) => i.trim())
-            : [],
-          method: row.method || "",
-          glass: row.glass || "",
-          garnish: row.garnish || "",
-        }));
+        const formatted = data
+          .map((row, index) => {
+            const id = readField(row, "id");
+            const ingredients = readField(row, "ingredients");
+            return {
+              // ids can repeat in the sheet, so the row position keeps keys unique
+              key: `${index}-${id}`,
+              id,
+              section: readField(row, "section") || NO_SECTION,
+              name: readField(row, "name"),
+              ingredients: ingredients
+                ? ingredients
+                    .split(/[,;]/)
+                    .map((i) => i.trim())
+                    .filter(Boolean)
+                : [],
+              method: readField(row, "method"),
+              glass: readField(row, "glass"),
+              garnish: readField(row, "garnish"),
+            };
+          })
+          .filter((recipe) => recipe.name);
 
         setRecipes(formatted);
       } catch (err) {
@@ -56,23 +98,41 @@ function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const normalizedQuery = query.toLowerCase().trim();
+  const handleSectionChange = (section, chip) => {
+    setActiveSection(section);
+    // keep the selected chip visible inside the horizontal chip row
+    chip.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // sections in alphabetical order, with recipes that have none at the end
+  const sectionCounts = recipes.reduce((counts, recipe) => {
+    counts[recipe.section] = (counts[recipe.section] || 0) + 1;
+    return counts;
+  }, {});
+  const sections = Object.keys(sectionCounts).sort((a, b) => {
+    if (a === NO_SECTION) return 1;
+    if (b === NO_SECTION) return -1;
+    return a.localeCompare(b);
+  });
+
+  const normalizedQuery = normalizeText(query);
+  const matches = (text) => normalizeText(text).includes(normalizedQuery);
 
   const filteredRecipes = recipes
     .filter((recipe) => {
+      if (activeSection !== ALL_SECTIONS && recipe.section !== activeSection) {
+        return false;
+      }
       if (!normalizedQuery) return true;
 
-      const inName = recipe.name?.toLowerCase().includes(normalizedQuery);
-      const inGlass = recipe.glass?.toLowerCase().includes(normalizedQuery);
-      const inGarnish = recipe.garnish
-        ?.toLowerCase()
-        .includes(normalizedQuery);
-      const inIngredients = recipe.ingredients?.some((ing) =>
-        ing.toLowerCase().includes(normalizedQuery)
+      return (
+        matches(recipe.name) ||
+        matches(recipe.glass) ||
+        matches(recipe.garnish) ||
+        recipe.ingredients.some(matches) ||
+        matches(recipe.method)
       );
-      const inMethod = recipe.method?.toLowerCase().includes(normalizedQuery);
-
-      return inName || inGlass || inGarnish || inIngredients || inMethod;
     })
     .sort((a, b) => a.name.localeCompare(b.name));
 
@@ -98,6 +158,38 @@ function App() {
                        text-[#fefdf8] placeholder:text-[#e5dfc6] text-sm
                        focus:outline-none focus:border-[#e5dfc6] transition"
           />
+
+          {sections.length > 1 && (
+            <nav
+              aria-label="Filter by section"
+              className="mt-2 -mx-1 flex gap-2 overflow-x-auto p-1"
+            >
+              {[ALL_SECTIONS, ...sections].map((section) => {
+                const isActive = section === activeSection;
+                const count =
+                  section === ALL_SECTIONS
+                    ? recipes.length
+                    : sectionCounts[section];
+                return (
+                  <button
+                    key={section}
+                    type="button"
+                    aria-pressed={isActive}
+                    aria-label={`${section}, ${count} recipe${count !== 1 ? "s" : ""}`}
+                    onClick={(e) => handleSectionChange(section, e.currentTarget)}
+                    className={`shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs tracking-wide transition ${
+                      isActive
+                        ? "bg-[#e5dfc6] border-[#e5dfc6] text-[#0d2f16] font-semibold"
+                        : "bg-[#144422] border-[#1f4a2a] text-[#fefdf8] hover:border-[#e5dfc6]"
+                    }`}
+                  >
+                    {section}
+                    <span className="ml-1 opacity-70">{count}</span>
+                  </button>
+                );
+              })}
+            </nav>
+          )}
 
           <p className="mt-2 text-xs text-[#fefdf8]/70 text-right">
             {loading
@@ -126,7 +218,20 @@ function App() {
 
           {!loading && !error && filteredRecipes.length === 0 && (
             <div className="p-6 bg-[#144422] border border-[#1f4a2a] text-center rounded-lg text-[#fefdf8]">
-              No results for <strong>{query}</strong>.
+              {normalizedQuery ? (
+                <>
+                  No results for <strong>{query}</strong>
+                  {activeSection !== ALL_SECTIONS && (
+                    <> in {activeSection}</>
+                  )}
+                  .
+                </>
+              ) : (
+                <>
+                  No recipes
+                  {activeSection !== ALL_SECTIONS && <> in {activeSection}</>}.
+                </>
+              )}
               <br />
               Try another cocktail.
             </div>
@@ -136,12 +241,17 @@ function App() {
             <section className="grid gap-6 md:grid-cols-2">
               {filteredRecipes.map((recipe) => (
                 <article
-                  key={recipe.id || recipe.name}
+                  key={recipe.key}
                   className="bg-[#fef7dd] text-[#24391c] rounded-xl border border-[#e7d7ad]
                              p-6 shadow-[0_4px_12px_rgba(0,0,0,0.25)] space-y-4
                              transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_6px_16px_rgba(0,0,0,0.30)]"
                 >
                   <header>
+                    {recipe.section !== NO_SECTION && (
+                      <p className="mb-1 uppercase text-[10px] tracking-[0.2em] text-[#24391c]/60">
+                        {recipe.section}
+                      </p>
+                    )}
                     <h2 className="text-xl font-serif font-bold tracking-wide">
                       {recipe.name}
                     </h2>
@@ -169,8 +279,8 @@ function App() {
                         Ingredients
                       </h3>
                       <ul className="text-sm list-disc list-inside space-y-1">
-                        {recipe.ingredients.map((ing) => (
-                          <li key={ing}>{ing}</li>
+                        {recipe.ingredients.map((ing, i) => (
+                          <li key={`${i}-${ing}`}>{ing}</li>
                         ))}
                       </ul>
                     </section>
